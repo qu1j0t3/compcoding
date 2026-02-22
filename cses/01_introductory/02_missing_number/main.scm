@@ -7,12 +7,12 @@
 ; csi -s main.scm < input.txt
 
 (define (missing-number n)
-  (let ((expected-sum (/ (* n (+ n 1)) 2)))
+  (let ((expected-sum (/ (* n (add1 n)) 2)))
     (define (accum count sum)
       (if (zero? count)
         sum
-        (accum (- count 1) (+ sum (read)))))
-    (- expected-sum (accum (- n 1) 0))))
+        (accum (sub1 count) (+ sum (read)))))
+    (- expected-sum (accum (sub1 n) 0))))
 
 (print (missing-number (read)))
 
