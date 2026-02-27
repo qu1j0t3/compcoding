@@ -1,3 +1,5 @@
+-- Copyright (C) 2026 Toby Thain, toby@telegraphics.net
+
 step :: Int -> IO ()
 
 step 1 = print 1

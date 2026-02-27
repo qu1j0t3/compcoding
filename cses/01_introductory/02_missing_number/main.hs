@@ -1,3 +1,5 @@
+-- Copyright (C) 2026 Toby Thain, toby@telegraphics.net
+
 missingNumber :: Int -> [Int] -> Int
 
 missingNumber n lst =
