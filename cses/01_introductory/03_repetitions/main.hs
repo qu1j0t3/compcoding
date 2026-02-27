@@ -9,7 +9,7 @@ step :: Int -> Int -> Char -> IO Int
 step count longest currentChar =
   do next <- getChar
      case next of
-       '\n' -> return longest
+       '\n' -> return (max count longest)
        _ -> if next == currentChar
             then step (count+1) longest currentChar
             else step 1 (max count longest) next
