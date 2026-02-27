@@ -2,10 +2,7 @@
 
 missingNumber :: Int -> [Int] -> Int
 
-missingNumber n lst =
-  let expectedSum = n*(n+1) `div` 2
-      actualSum = foldl (+) 0 lst
-  in expectedSum - actualSum
+missingNumber n lst = n*(n+1) `div` 2 - sum lst
 
 
 main :: IO ()
