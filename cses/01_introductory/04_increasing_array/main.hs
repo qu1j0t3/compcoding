@@ -6,19 +6,18 @@
 -- import Data.List
 
 
--- Find all values that are less than their predecessor.
--- The least change is to make them equal to their predecessor,
--- so the minimum change steps to achieve a nondecreasing sequence
--- is the positive sum of all those differences.
-
--- We can slide a 2-value window along the list.
--- This can be done by zip'ing the input
--- with itself, less its head value.
-
+-- Proceed from left to right, maintaining the count
+-- of change steps needed and the current highest level
+-- reached. For each value, if it's less than the current
+-- level, add the difference to the accumulated steps,
+-- otherwise adjust the current level to the new value.
 
 sumGaps :: [Int] -> Int
 
-sumGaps series = sum [ a-b | (a,b) <- zip series (drop 1 series), b < a ]
+sumGaps (x:xs) =
+  fst (foldl (\(acc,level) v ->
+         (acc+(max 0 (level-v)),max level v)) (0,x) xs)
+sumGaps [] = 0
 
 
 increasing :: Int -> IO Int
