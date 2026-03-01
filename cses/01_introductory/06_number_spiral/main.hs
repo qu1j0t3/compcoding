@@ -6,12 +6,14 @@
 -- import Text.Printf
 
 
+test :: [Int] -> Int
+
 test [y,x] = getIndex y x
 
 
 runTests :: Int -> IO ()
 
-runTests count = sequence_ [ getLine >>= (print . test . (map read) . words) | t <- [1..count]]
+runTests count = sequence_ [ getLine >>= (print . test . (map read) . words) | _ <- [1..count]]
 
 
 getIndex :: Int -> Int -> Int
