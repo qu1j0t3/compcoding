@@ -1,5 +1,5 @@
 main : main.hs
-	ghc -Wall main.hs
+	ghc -Wall -Wextra main.hs
 
 test : main input.txt
 	./main < input.txt
