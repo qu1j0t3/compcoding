@@ -9,19 +9,33 @@
 
 board :: Int -> [Int]
 
-board maxk =
-  [ let moves::[Int] = [1 | r <- [1..k], c <- [1..k],     -- first knight can be placed on every board square
-                            r' <- [1..k], c' <- [1..k],   -- second knight
-                            (r',c') /= (r,c),             -- can't be same position
-                            abs (r'-r) + abs (c'-c) /= 3 || abs (r'-r) > 2 || abs (c'-c) > 2] -- can't threaten first knight (one knight move away)
-    in (length moves) `div` 2
-    | k <- [1..maxk] ]
-        -- IMPORTANT NOTE FOR FUTURE
-        -- I spent far too long here not seeing that 'abs (r'-r) + abs (c'-c) /= 3'
-        -- includes moves outside the 5x5 neighbourhood!
-        -- e.g. 3 squares directly horizontal or vertical.
-        -- I had convinced myself this logic was correct partly because
-        -- I only tested on a 5x5 generator e.g. [-2..2]x[-2..2] !
+board maxk = map moves [1..maxk]
+
+
+moves :: Int -> Int
+
+moves 1 = 0
+moves 2 = 4*3 `div` 2
+moves 3 = (8*(3*3-3)          -- if first knight is in an edge position, it's always threatened by 2 other knight moves
+          + (3*3-1)) `div` 2  -- if first knight is in centre, other knight can be in any edge position
+-- When the board is at least 4x4, then there are six
+-- threat configurations: the central (k-4) x (k-4) squares are threatened by all 8 knight moves,
+-- then the adjacent strips of k-4 squares in each direction (N,E,S,W) are threatened by 6 knight moves
+-- then the edge strips of k-4 squares are threatened by 4 knight moves
+-- then there are four corner squares, in each of the four corners
+-- +---+---+- -
+-- | A | B |
+-- +---+---+- -
+-- | C | D |
+-- +---+---+- -
+-- :   :   :
+moves k = ((k-4)*(k-4) * (k*k - 9) -- centre square
+           + 4 * (k-4) * (k*k - 7) -- inner strips
+           + 4 * (k-4) * (k*k - 5) -- edge strips
+           + 4 * (k*k - 5) -- corner square D (4 threats)
+           + 8 * (k*k - 4) -- corner squares B, C (3 threats each)
+           + 4 * (k*k - 3) -- corner square A (2 threats)
+          ) `div` 2
 
 -- Input:
 -- 8
