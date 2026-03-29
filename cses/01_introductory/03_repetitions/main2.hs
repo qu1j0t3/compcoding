@@ -11,4 +11,4 @@ main :: IO ()
 
 -- first, apply group to the parameter,
 -- then apply (fmap length), then maximum, then print
-main = getLine >>= (print . maximum . (fmap length) . group)
+main = getLine >>= (print . maximum . (map length) . group)
