@@ -34,6 +34,9 @@
   -- flip a bit -> if not in state -> add to state and accum -> continue from new state and bit 0
   --            -> if in state, advance bit index and retry
 
+-- For sets of Int, Data.IntSet is probably a better idea
+-- than using Integer and hand-rolled bit set.
+
 import Data.Bits
 
 import Numeric
