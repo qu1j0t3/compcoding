@@ -40,7 +40,6 @@
 import Data.Bits
 
 import Numeric
-import Data.Char
 
 step :: Int -> Int -> Integer -> Int -> [Int] -> [Int]
 step bits i state v acc =

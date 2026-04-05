@@ -22,6 +22,7 @@
 -- AACABACAA
 
 import Data.Map.Lazy (Map, insertLookupWithKey, foldrWithKey)
+-- We don't care about order, so Data.HashMap.Strict might be more efficient
 import qualified Data.Map.Lazy as Map
 
 countChar :: Char -> Map Char Int -> Map Char Int
