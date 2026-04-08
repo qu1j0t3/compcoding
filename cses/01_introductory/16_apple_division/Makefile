@@ -1,5 +1,7 @@
-main : main.hs
-	ghc -Wall -Wextra main.hs
+% : %.hs
+	ghc -Wall -Wextra $<
+
+all : main knapsack
 
 test : main test_input.txt
 	@ TMP=$$(mktemp); \
@@ -11,4 +13,4 @@ test : main test_input.txt
 	rm -f $$TMP
 
 clean :
-	rm -f main main.o main.hi
+	rm -f main main.o main.hi knapsack knapsack.o knapsack.hi

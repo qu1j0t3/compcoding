@@ -28,12 +28,29 @@
 
 -- distribute apples into the two boxes
 
--- "Is there a way to make the difference smaller"
--- given heavier box is L and lighter box is S
--- difference d = L-S
--- It's impossible to reduce the difference by moving an apple from smaller to larger
--- but if there is an apple a in L that is < d
--- can move the largest such from L to S
+-- how many ways to distribute? it's a binary vector
+-- 000...000   all apples in box 0
+-- 111...111   all in box 1
+-- (every other bit string)  some distribution between non empty boxes
+-- (if there is > 1 apple then neither box will be empty)
+-- i.e. 2^n ways - complexity is exponential in the number of apples
+-- if we try to work out the answer by brute force.
+
+-- We need to be efficient for problems up to 20 apples (2^20 arrangements)
+-- so it seems reasonable to assume dynamic programming will be involved
+-- Which means: we need to identify 'subproblems'
+-- probably by focusing on the metric we most care about -
+-- the difference between the two boxes/partitions
+
+-- subproblems like...
+-- optimal way of distributing first N apples - but how does this answer depend on
+-- an optimal way of distributing (some first M apples where M < N)
+-- or... is it sums of nested subsets
+
+-- there is a clever way of getting 'sum of subset'
+-- See Knapsack Problems, page 83, Competitive Programmer’s Handbook, Laaksonen
+-- ... but again, there are 2^n pairs of subsets (partitionings)
+
 
 import Data.List
 
