@@ -1,3 +1,4 @@
+-- DIGRESSION
 -- Copyright (C) 2026 Toby Thain, toby@telegraphics.net
 
 -- References:
@@ -17,9 +18,12 @@ possible :: [Int]   -- ^the list of usable weights
             -> Bool
 possible [] 0 = True -- can always make a zero weight from no weights
 possible [] _ = False -- cannot make a positive or negative weight from no weights
+-- the simplistic recursive function that costs
+-- exponential time because of the branching structure
 possible (w:ws) x =
   possible ws x -- can it be done with remaining weights if we ignore next one (w)
   || possible ws (x-w) -- can it be done with remaining weights AND w
+
 
 -- |Returns printable version of the `possible` result
 ch :: Bool -> Char

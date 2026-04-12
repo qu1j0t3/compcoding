@@ -53,6 +53,8 @@
 
 
 import Data.List
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as IntSet
 
 
 solve :: [Int] -> [Int] -> Int
@@ -69,6 +71,21 @@ solve' s l sw lw =
     [] -> lw - sw
     as -> let a = maximum as
           in solve (a:s) (delete a l)
+
+-- |Powerset of a list (all subsets, but allowing duplicate elements)
+ps :: [a] -> [[a]]
+ps [] = [[]]
+ps (x:xs) = (ps xs) ++ map (x:) (ps xs)
+
+-- |Get all unique sums of a list of weights
+uniqueSums :: [Int] -> IntSet
+uniqueSums xs = IntSet.fromList $ map sum $ ps xs
+
+-- |Get unique differences between each partitioning into two boxes
+uniqueDiffs :: [Int] -> IntSet
+uniqueDiffs xs =
+  let sums = map sum $ ps xs
+  in IntSet.fromList $ map (\ (a,b) -> abs (a-b)) $ zip sums (reverse sums)
 
 main :: IO ()
 main = getLine >> getLine >>= (print . (solve []) . (map read) . words)

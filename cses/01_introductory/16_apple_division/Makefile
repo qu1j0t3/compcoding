@@ -1,16 +1,16 @@
 % : %.hs
-	ghc -Wall -Wextra $<
+	ghc -O -Wall -Wextra $<
 
-all : main knapsack
+all : main knapsack lattice
 
 test : main test_input.txt
 	@ TMP=$$(mktemp); \
 	./main < test_input.txt | tee $$TMP ; \
 	if cmp $$TMP test_output.txt; \
-	then echo "PASS:"; \
-	else echo "FAIL - Expected:"; cat test_output.txt; \
+	then echo "\033[1m\033[32mPASS:\033[0m"; \
+	else echo "\033[1m\033[31mFAIL\033[0m - Expected:"; cat test_output.txt; \
 	fi; \
 	rm -f $$TMP
 
 clean :
-	rm -f main main.o main.hi knapsack knapsack.o knapsack.hi
+	rm -f main knapsack lattice *.o *.hi
