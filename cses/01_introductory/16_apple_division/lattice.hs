@@ -19,8 +19,9 @@ import qualified Data.Map.Strict as Map
 import Data.Maybe
 
 -- base case (0,0) (corner of lattice)
--- each move is (a,b) -> to either (a+1,b) or (a,b+1)
--- until reaching (m,n) (size of lattice)
+-- paths start at (m,n) - opposite corner of lattice
+-- each move is (a,b) -> to either (a-1,b) or (a,b-1)
+-- until reaching (0,0).
 -- subproblems are obviously indexed by position (a,b)
 
 -- since all paths have the same start and end point
@@ -31,26 +32,26 @@ import Data.Maybe
 -- each problem requires the evaluation of two subproblems.
 -- Sequence: https://oeis.org/A000984
 
-moves :: Int -> Int -> Int
-moves 0 0 = 1
-moves a b = (if a > 0 then moves (a-1) b else 0) +
-            (if b > 0 then moves a (b-1) else 0)
+paths :: Int -> Int -> Int
+paths 0 0 = 1
+paths a b = (if a > 0 then paths (a-1) b else 0) +
+            (if b > 0 then paths a (b-1) else 0)
 
 type SolutionMap = Map (Int,Int) Integer
 
 -- |Memoising evaluator. If solution is in map, return it, and unchanged map.
 -- |otherwise, call self for subproblems and return solution with updated map.
-movesMStep :: SolutionMap -> Int -> Int -> (Integer,SolutionMap)
-movesMStep m a b =
+pathsMStep :: SolutionMap -> Int -> Int -> (Integer,SolutionMap)
+pathsMStep m a b =
   case Map.lookup (a,b) m of
     Just solution -> (solution,m)
-    Nothing -> let (s,m')   = if a > 0 then movesMStep m (a-1) b else (0,m)
-                   (s',m'') = if b > 0 then movesMStep m' a (b-1) else (0,m')
+    Nothing -> let (s,m')   = if a > 0 then pathsMStep m (a-1) b else (0,m)
+                   (s',m'') = if b > 0 then pathsMStep m' a (b-1) else (0,m')
                    sol = s + s'
                in (sol, Map.insert (a,b) sol m'')
 
-movesM :: Int -> Int -> Integer
-movesM a b = fst $ movesMStep (Map.singleton (0,0) 1) a b
+pathsM :: Int -> Int -> Integer
+pathsM a b = fst $ pathsMStep (Map.singleton (0,0) 1) a b
 
 
 -- Variation: related to "counting Dyck words", per Theo Honahan:
@@ -58,12 +59,12 @@ movesM a b = fst $ movesMStep (Map.singleton (0,0) 1) a b
 -- where a must be < b
 -- Sequence: the Catalan numbers https://oeis.org/A000108
 
-movesHalf :: Int -> Int -> Int
-movesHalf 0 0 = 1
-movesHalf a b = (if a > 0 then movesHalf (a-1) b else 0) +
-                (if b > 0 && b > a then movesHalf a (b-1) else 0)
+pathsHalf :: Int -> Int -> Int
+pathsHalf 0 0 = 1
+pathsHalf a b = (if a > 0 then pathsHalf (a-1) b else 0) +
+                (if b > 0 && b > a then pathsHalf a (b-1) else 0)
 
 
 
 main :: IO ()
-main = getLine >>= (print . (\ [a,b] -> movesM a b) . (map read) . words)
+main = getLine >>= (print . (\ [a,b] -> pathsM a b) . (map read) . words)
