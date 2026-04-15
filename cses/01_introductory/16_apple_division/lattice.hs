@@ -5,6 +5,7 @@
 -- * Haddock markup https://haskell-haddock.readthedocs.io/latest/markup.html#
 -- * Style https://wiki.haskell.org/Programming_guidelines#Good_Programming_Practice
 -- * Rules of thumb for folds https://wiki.haskell.org/Foldr_Foldl_Foldl%27
+-- * Jelvis' https://jelv.is/blog/Lazy-Dynamic-Programming/
 
 -- "Maze", example used by "Tech with Nikola" video:
 -- https://youtu.be/Hdr64lKQ3e4?t=795
@@ -24,9 +25,11 @@ import Data.Maybe
 -- until reaching (0,0).
 -- subproblems are obviously indexed by position (a,b)
 
--- since all paths have the same start and end point
+-- Since all paths have the same start and end point
 -- (there is no optimisation problem),
 -- the task is just to count possible paths.
+-- Paths are effectively bit strings, where each string
+-- in a problem m x n has some permutation of m 0 bits and n 1 bits.
 
 -- Naive recursive; exponential cost O(2^n) because evaluating
 -- each problem requires the evaluation of two subproblems.
@@ -67,4 +70,4 @@ pathsHalf a b = (if a > 0 then pathsHalf (a-1) b else 0) +
 
 
 main :: IO ()
-main = getLine >>= (print . (\ [a,b] -> pathsM a b) . (map read) . words)
+main = getLine >>= (print . (\ [a,b] -> pathsHalf a b) . (map read) . words)

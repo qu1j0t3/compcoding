@@ -20,11 +20,27 @@ import Data.Maybe
 -- * the map key is "target sum", and each sum is therefore a subproblem
 
 -- Example: Find minimum coins from [1, 4, 5] needed to make a sum of 13
---          Some possible paths from 13 to our base case are 13->(5)->8->(5)->3->(1,1,1)->0     (5 coins)
---                                                           13->(4)->9->(5)->4->(4)->0         (3 coins)
---                                                           13->(1)->12->(5)->7->(5)->2->(1,1) (5 coins)
+--          Some possible paths from 13 to our base case are
+--            13->(5)->8->(5)->3->(1,1,1)->0         (5 coins)
+--            13->(4)->9->(5)->4->(4)->0             (3 coins)
+--            13->(1)->12->(5)->7->(5)->2->(1,1)->0  (5 coins)
 
--- |Find map of subproblems to coin counts
+
+-- |Naive recursive solver for minimum coints.
+-- |This is excruciatingly slow for even small problems (e.g. minCoinsNaive [1,2,5,10] 30)
+-- |because of the exponential cost of branching for every coin
+-- |to evaluate every subproblem.
+minCoinsNaive :: [Int] -> Int -> Maybe Int
+minCoinsNaive _ 0 = Just 0
+minCoinsNaive coins target =
+  -- try each coin with solutions to subproblem that results after subtracting the coin
+  let possibleCoins = filter (<= target) coins
+  in case catMaybes (fmap (\ c -> minCoinsNaive coins (target-c)) possibleCoins) of
+       [] -> Nothing
+       cs -> Just $ foldl1 (min) (map (1+) cs)
+
+
+-- |Find map of subproblems to coin counts; memoised version
 minCoins :: [Int]           -- ^set of possible coins
             -> Int          -- ^target sum
             -> IntMap Int

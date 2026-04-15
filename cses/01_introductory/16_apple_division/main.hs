@@ -73,6 +73,7 @@ solve' s l sw lw =
           in solve (a:s) (delete a l)
 
 -- |Powerset of a list (all subsets, but allowing duplicate elements)
+-- (This is actually in Data.List as `subsequences`)
 ps :: [a] -> [[a]]
 ps [] = [[]]
 ps (x:xs) = (ps xs) ++ map (x:) (ps xs)

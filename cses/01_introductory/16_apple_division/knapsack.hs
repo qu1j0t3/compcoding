@@ -11,6 +11,8 @@
 -- Given a list of weights [w1,w2,...,wn], determine all sums
 -- that can be constructed using the weights.
 
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as IntSet
 
 -- |Can the given weight be constructed by combining weights from a list
 possible :: [Int]   -- ^the list of usable weights
