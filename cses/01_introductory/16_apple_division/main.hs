@@ -37,19 +37,21 @@
 -- if we try to work out the answer by brute force.
 
 -- We need to be efficient for problems up to 20 apples (2^20 arrangements)
--- so it seems reasonable to assume dynamic programming will be involved
--- Which means: we need to identify 'subproblems'
--- probably by focusing on the metric we most care about -
--- the difference between the two boxes/partitions
 
--- subproblems like...
--- optimal way of distributing first N apples - but how does this answer depend on
--- an optimal way of distributing (some first M apples where M < N)
--- or... is it sums of nested subsets
 
 -- there is a clever way of getting 'sum of subset'
 -- See Knapsack Problems, page 83, Competitive Programmer’s Handbook, Laaksonen
--- ... but again, there are 2^n pairs of subsets (partitionings)
+
+{-
+How about this plan:
+Distribute into 2 boxes
+Let d be the difference
+using a sub-exponential 'sum of subsets' method,
+look for a subset in the larger group that is somewhere between d/2 and d-1
+if there is one, move the subset to the smaller group
+
+  test data: [10,16,2,19,6,13,7,13,17,1]
+-}
 
 
 import Data.List
