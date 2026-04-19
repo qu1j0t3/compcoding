@@ -34,10 +34,8 @@
 solve :: [[Int]] -> Int
 solve [] = 1            -- base case: placed all rows, so count one solution
 solve (b:bs) =          -- place Q in each possible column of row r and return sum of resulting subproblems (r-1)
-  sum [ let blocked' =  -- update unplaced rows (< r) with new threatened columns
-              map (\ (d,cs) -> c:(c+d):(c-d):cs)
-                  (zip [1..] bs)
-        in solve blocked'
+  sum [ solve ( map (\ (d,cs) -> c:(c+d):(c-d):cs) -- update future rows with new threatened columns based on chosen c
+                    (zip [1..] bs) )
         | c <- [1..8], not (elem c b) ]
 
 
