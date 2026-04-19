@@ -43,52 +43,32 @@
 -- See Knapsack Problems, page 83, Competitive Programmer’s Handbook, Laaksonen
 
 {-
-How about this plan:
-Distribute into 2 boxes
-Let d be the difference
-using a sub-exponential 'sum of subsets' method,
-look for a subset in the larger group that is somewhere between d/2 and d-1
-if there is one, move the subset to the smaller group
+
+let t = total divide by 2
+look at possible sums
+get the two closest to t
 
   test data: [10,16,2,19,6,13,7,13,17,1]
+  [10,2,1,2,3,1,1,5,4]
+
 -}
 
+solve :: [Int] -> Int
+solve xs = let halfDown = (sum xs) `div` 2
+               (a1,a2) = lsum xs halfDown
+           in abs (a1-a2)
 
-import Data.List
-import Data.IntSet (IntSet)
-import qualified Data.IntSet as IntSet
+-- |Compute the largest subset sum from list that's <= mx
+-- |Return tuple of the subset sum and the sum of complemented subset
+lsum :: [Int] -> Int -> (Int,Int)
+lsum input mx =
+  lstep input 0 0
+  where lstep [] acc acc2     = (acc,acc2) -- base case, input used up
+        lstep (x:xs) acc acc2 =
+          let (a,a2)   = lstep xs acc (x+acc2) -- take element in acc2 and continue
+              (a',a2') = lstep xs (x+acc) acc2 -- take in acc, continue
+          in if acc+x > mx || a > a' then (a,a2) else (a',a2')
 
-
-solve :: [Int] -> [Int] -> Int
-solve [] [a] = a  -- degenerate case of one apple
-solve a b = let aw = sum a
-                bw = sum b
-            in if aw < bw then solve' a b aw bw
-               else if aw > bw then solve' b a bw aw
-               else 0
-
-solve' :: [Int] -> [Int] -> Int -> Int -> Int
-solve' s l sw lw =
-  case filter (< (lw - sw)) l of
-    [] -> lw - sw
-    as -> let a = maximum as
-          in solve (a:s) (delete a l)
-
--- |Powerset of a list (all subsets, but allowing duplicate elements)
--- (This is actually in Data.List as `subsequences`)
-ps :: [a] -> [[a]]
-ps [] = [[]]
-ps (x:xs) = (ps xs) ++ map (x:) (ps xs)
-
--- |Get all unique sums of a list of weights
-uniqueSums :: [Int] -> IntSet
-uniqueSums xs = IntSet.fromList $ map sum $ ps xs
-
--- |Get unique differences between each partitioning into two boxes
-uniqueDiffs :: [Int] -> IntSet
-uniqueDiffs xs =
-  let sums = map sum $ ps xs
-  in IntSet.fromList $ map (\ (a,b) -> abs (a-b)) $ zip sums (reverse sums)
 
 main :: IO ()
-main = getLine >> getLine >>= (print . (solve []) . (map read) . words)
+main = getLine >> getLine >>= (print . solve . (map read) . words)

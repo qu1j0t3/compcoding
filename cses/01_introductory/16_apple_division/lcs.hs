@@ -67,5 +67,11 @@ main = getLine >>= (\ a ->
          (putStrLn $ "2:   " ++ b) >>
          (putStrLn $ "LCS: " ++ (lcsM a b))))
 
+-- Test:
+-- % make lcs
+-- % (./random_word.sh;./random_word.sh )|./lcs                                                                                                                         (main ?)
+-- 1:   superfusion
+-- 2:   polysalicylide
+-- LCS: psi
 
 
