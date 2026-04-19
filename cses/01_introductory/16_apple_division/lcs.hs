@@ -40,18 +40,32 @@ lcs (a:as) (b:bs) | a == b    = a:(lcs as bs)
 
 lcsM :: Eq a => [a] -> [a] -> [a]
 
-lcsM a b = fst $ lcsMStep Map.empty a b 0 0
-  where lcsMStep m [] _ i j = ([],m)   -- the base cases: lcs when either list is empty, is empty list
-        lcsMStep m _ [] i j = ([],m)
+lcsM input1 input2 = fst $ lcsMStep Map.empty input1 input2 0 0
+  where lcsMStep :: Eq a => Map (Int,Int) [a] -> [a] -> [a] -> Int -> Int -> ([a], Map (Int,Int) [a])
+        lcsMStep m [] _ _ _ = ([],m)   -- the base cases: lcs when either list is empty, is empty list
+        lcsMStep m _ [] _ _ = ([],m)
         lcsMStep m (a:as) (b:bs) i j = -- (i,j) = index to subproblem: number of elements dropped before each list
           case Map.lookup (i,j) m of   -- if solution is in the map,
             Just soln -> (soln,m)      -- return it
             -- otherwise, solve subproblem:
             -- if heads are equal, accumulate head into sequence and continue on both lists without their heads
-            Nothing -> let (soln,m') = if a == b then let (s,m')   = lcsMStep m as bs (i+1) (j+1) in (a:s,m')
-            -- if heads are unequal, try one step deeper on both lists (branching) and take longest returned sequence
-                                                 else let (s1,m')  = lcsMStep m (a:as) bs i (j+1)
-                                                          (s2,m'') = lcsMStep m' as (b:bs) (i+1) j
-                                                      in if length s1 > length s2 then (s1,m'') else (s2,m'')
-                       in (soln, Map.insert (i,j) soln m') -- add solved subproblem to the map
+            Nothing -> let (soln,updatedMap) =
+                             if a == b then let (s,m')   = lcsMStep m as bs (i+1) (j+1) in (a:s,m')
+                -- if heads are unequal, try one step deeper on both lists (branching) and take longest returned sequence
+                                       else let (s1,m')  = lcsMStep m (a:as) bs i (j+1)
+                                                (s2,m'') = lcsMStep m' as (b:bs) (i+1) j
+                                            in if length s1 > length s2 then (s1,m'') else (s2,m'')
+                       in (soln, Map.insert (i,j) soln updatedMap) -- add solved subproblem to the map
+
+
+-- Read two lines as strings then print longest common subsequence of the strings
+main :: IO ()
+
+main = getLine >>= (\ a ->
+       getLine >>= (\ b ->
+         (putStrLn $ "1:   " ++ a) >>
+         (putStrLn $ "2:   " ++ b) >>
+         (putStrLn $ "LCS: " ++ (lcsM a b))))
+
+
 
