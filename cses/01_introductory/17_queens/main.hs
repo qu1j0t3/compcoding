@@ -33,14 +33,17 @@ import Data.Array
 
 solve :: [((Int,Int),Bool)] -> Int
 solve input =
-  let board = array ((1,1),(8,8)) input
-  in sum [ if board!(i,j) then 1 else 0 | i <- [1..8], j <- [1..8] ]
+  let reserved = array ((1,1),(8,8)) input
+  in sum [ if reserved!(i,j) then 1 else 0 | i <- [1..8], j <- [1..8] ]
+
+readInput :: IO [((Int,Int),Bool)]
+readInput = fmap mconcat -- flatten the 2-D input into a list of index/value tuples
+                 (traverse (\ r -> -- traverse over 8 rows
+                            fmap (\ line -> map (\ (c,b) -> ((r,c),b)) -- pair (row,col) tuples with reserved flags
+                                                (zip [1..] (map (== '*') line))) -- add column index and test for '*'
+                                 getLine) -- read each row as a line (string)
+                           [1..8])
 
 main :: IO ()
-main = traverse (\ r -> -- traverse over 8 rows
-                  fmap (\ line -> map (\ (c,b) -> ((r,c),b)) -- pair (row,col) tuples with reserved flags
-                                      (zip [1..] (map (== '*') line))) -- add column index
-                       getLine) -- read each row as a line (string)
-                [1..8]
-       >>= (print . solve . mconcat) -- mconcat flattens the 2-D input into a list of index/value tuples
+main = readInput >>= (print . solve)
 
