@@ -20,7 +20,7 @@ t : main test_input.txt test_output.txt
 	diff --color=always test_output.txt <(./main < test_input.txt)
 
 t1 : main 1.in 1.out
-	vimdiff <(head -30 1.out) <((echo 19; sed -n 2,20p 1.in) | timeout 3 ./main)
+	vimdiff 1.out <(timeout 3 ./main < 1.in)
 
 clean :
 	rm -f main *.o *.hi
