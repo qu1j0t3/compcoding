@@ -16,8 +16,8 @@ all : main
 # 	fi; \
 # 	rm -f $$TMP
 
-t : main test_input.txt test_output.txt
-	diff --color=always test_output.txt <(./main < test_input.txt)
+t : main 1.in 1.out
+	./main --check 1.out < 1.in
 
 t1 : main 1.in 1.out
 	vimdiff 1.out <(timeout 3 ./main < 1.in)
