@@ -80,8 +80,8 @@ green str   = ansiGreen ++ str ++ ansiReset
      because every play must score a point (no player can lose all games)
 -}
 
-solve :: [Int] -> Maybe [(Int,Int)]
-solve [cards, target1, target2] =
+solve :: Int -> Int -> Int -> Maybe [(Int,Int)]
+solve cards target1 target2 =
   let scoringPlays = target1 + target2
   in if scoringPlays <= cards
         && (target1 + target2 == 0 -- a game of all draws is valid
@@ -118,8 +118,8 @@ runWithChecking solutionFile =
     withFile solutionFile ReadMode
       ( \ handle ->
           let gameCount::Int = read line1
-              checkSolution :: [Int] -> Maybe [(Int,Int)] -> IO ()
-              checkSolution [n, t1, t2] result =
+              checkSolution :: Int -> Int -> Int -> Maybe [(Int,Int)] -> IO ()
+              checkSolution n t1 t2 result =
                 hGetLine handle >>= (\ expected ->
                     case result of
                       Nothing -> if expected == "NO"
@@ -138,7 +138,7 @@ runWithChecking solutionFile =
           in traverse_ (\ gameNumber -> getLine
                           >>= (\ l -> -- print input line for debugging
                             fmap (const l) (putStrLn $ "#" ++ (show gameNumber) ++ cyan (" Input: " ++ l)))
-                          >>= ((\ input -> checkSolution input (solve input)) . (map read) . words))
+                          >>= ((\ [n,t1,t2] -> checkSolution n t1 t2 (solve n t1 t2)) . (map read) . words))
                         [1..gameCount]
       )
 
@@ -149,4 +149,7 @@ main = getArgs >>= ( \case
             _ -> failWithMessage "run with no arguments, or --check solutionFile"
           )
   where games :: Int -> IO ()
-        games n = traverse_ (\ _ -> getLine >>= (printSolution . solve . (map read) . words)) [1..n]
+        games gameCount =
+          traverse_ (\ _ -> getLine >>=
+                      (printSolution . (\ [n,t1,t2] -> solve n t1 t2) . (map read) . words))
+                    [1..gameCount]
