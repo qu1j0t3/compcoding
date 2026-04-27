@@ -66,35 +66,24 @@ green str   = ansiGreen ++ str ++ ansiReset
 -- NO
 
 {-
-A game is a zip'd pair of permutations of respective players' cards
-we need to find a game with: exact number of a>b, exact number of b>a, and rest are all draws
-
-i guess we can do this with backtracking search?
-
+  If player1 plays                                         1 2 3 4 5 6 7 8
+  and player 2 plays a 'left' rotation by n of this, e.g.  4 5 6 7 8 1 2 3
+  then scores are distributed n to player 1                2 2 2 2 2 1 1 1
+  Then we have to deal with corner cases:
+  - if there is 1 card left, after playing all draws, then it can never score a point
+    to a player, and so targets must be zero for the game to be valid
+  - if there is more than one card left after playing draws, then neither target can be zero,
+    because every play must score a point
 -}
-
-
--- permgen :: Eq a => [a] -> [[a]]
--- permgen [] = [[]]
--- permgen xs = concatMap (\ x -> map (x:) (permgen (delete x xs))) xs
-
 
 solve :: [Int] -> Maybe [(Int,Int)]
 solve [cards, target1, target2] =
-  if cards >= target1 + target2
-  then step (reverse [1..cards]) (reverse [1..cards]) cards target1 target2 []
-  else Nothing
-    where step :: [Int] -> [Int] -> Int -> Int -> Int -> [(Int,Int)] -> Maybe [(Int,Int)]
-          step _  _ 0 0 0 acc = Just acc -- success! this game is a solution
-          step [] _ _ _ _ _   = Nothing -- can't exhaust either hand with non zero targets
-          step _ [] _ _ _ _   = Nothing
-          step p1@(h1:rest1) p2@(h2:rest2) n t1 t2 acc
-            | n > target1 + target2 = -- play all draws first; we assume h1 and h2 are equal by construction above
-              step rest1 rest2 (n-1) t1 t2 ((h1,h2):acc)
-            | t1 > 0    = -- if either t1 > 0 or t2 > 0, we're not finished playing
-              find (<h1) p2 >>= \ lose2 -> step rest1 (delete lose2 p2) (n-1) (t1-1) t2 ((h1,lose2):acc)
-            | otherwise =
-              find (<h2) p1 >>= \ lose1 -> step (delete lose1 p1) rest2 (n-1) t1 (t2-1) ((lose1,h2):acc)
+  let scoringPlays = target1 + target2
+  in if scoringPlays <= cards
+        && (target1 + target2 == 0 || (scoringPlays > 1 && target1 > 0 && target2 > 0))
+     then Just $ [if a > scoringPlays then (a,a) else (a,1+((a-1-target2) `mod` scoringPlays)) | a <- [1..cards]]
+     else Nothing
+
 
 printSolution :: Maybe [(Int,Int)] -> IO ()
 printSolution Nothing     = putStrLn "NO"
@@ -105,13 +94,14 @@ failWithMessage :: String -> IO ()
 failWithMessage err = hPutStrLn stderr (redBold err) >> exitWith (ExitFailure 1)
 
 -- Given number of cards and target scores, check whether
--- the given plays are a valid solution
+-- the given plays reach the target scores.
+-- return Nothing if plays given are not valid (each must be a permutation of cards 1..n)
 
-checkGame :: [Int] -> [(Int,Int)] -> Maybe Bool
-checkGame [n, t1, t2] game =
+checkGame :: Int -> Int -> Int -> [(Int,Int)] -> Maybe Bool
+checkGame n t1 t2 game =
   if sort (map fst game) == [1..n] && sort (map snd game) == [1..n]
-  then let scores = map (\(a,b) -> (a>b, a<b)) game
-         in Just $ length (filter fst scores) == t1 && length (filter snd scores) == t2
+  then let scores = map (\(a,b) -> (a>b,b>a)) game
+       in Just $ length (filter fst scores) == t1 && length (filter snd scores) == t2
   else Nothing
 
 
@@ -119,39 +109,43 @@ checkGame [n, t1, t2] game =
 -- problems will be read from input and solved,
 -- then checked against the solutions file given
 
+--failedCheck str = putStrLn $ red str
+failedCheck = failWithMessage
+
 runWithChecking :: String -> IO ()
 runWithChecking solutionFile =
   getLine >>= \ line1 ->
     withFile solutionFile ReadMode
       ( \ handle ->
-          let n::Int = read line1
+          let gameCount::Int = read line1
               checkSolution :: [Int] -> Maybe [(Int,Int)] -> IO ()
-              checkSolution input result =
+              checkSolution [n, t1, t2] result =
                 hGetLine handle >>= (\ expected ->
                     case result of
                       Nothing -> if expected == "NO"
                                  then putStrLn $ (green "  PASS") ++ " (" ++ expected ++ " is correct)"
-                                 else failWithMessage $ (red "FAIL:") ++ " no solution, but expected " ++ expected
+                                 else failedCheck $ (red "FAIL:") ++ " no solution, but expected " ++ expected
                       Just game -> if expected == "YES"
-                                   then -- skip two solution lines, as we will check ourselves
+                                   then -- skip two solution lines, because our solution is unlikely to match exactly.
+                                        -- we have to verify this ourselves
                                      hGetLine handle >> hGetLine handle >>
-                                       case checkGame input game of
-                                         Nothing    -> failWithMessage "INVALID PLAYS"
+                                       case checkGame n t1 t2 game of
                                          Just True  -> putStrLn $ (green "  PASS GAME: ") ++ (show game)
-                                         Just False -> failWithMessage "FAIL SCORES"
-                                         -- hPutStrLn stderr sol1 >> hPutStrLn stderr sol2
-                                   else failWithMessage $ "FAIL: expected " ++ expected
+                                         Just False -> failedCheck "FAIL SCORES"
+                                         Nothing    -> failedCheck "INVALID PLAYS"
+                                   else failedCheck $ "FAIL: expected " ++ expected ++ " but got: " ++ (show game)
                   )
           in traverse_ (\ gameNumber -> getLine
-                          >>= (\ l -> fmap (const l) (putStrLn $ "#" ++ (show gameNumber) ++ cyan (" Input: " ++ l))) -- print input lines for debugging
+                          >>= (\ l -> -- print input line for debugging
+                            fmap (const l) (putStrLn $ "#" ++ (show gameNumber) ++ cyan (" Input: " ++ l)))
                           >>= ((\ input -> checkSolution input (solve input)) . (map read) . words))
-                        [1..n]
+                        [1..gameCount]
       )
 
 main :: IO ()
 main = getArgs >>= ( \case
-            ["--check", solutionFile] -> runWithChecking solutionFile
             [] -> getLine >>= ( games . read )
+            ["--check", solutionFile] -> runWithChecking solutionFile
             _ -> failWithMessage "run with no arguments, or --check solutionFile"
           )
   where games :: Int -> IO ()

@@ -1,11 +1,12 @@
 SHELL=bash
 
 % : %.hs
-	ghc -O -Wall -Wextra $<
+	ghc -O -W -Wall -Wno-missing-signatures $<
 
 all : main
 
-# a diff can't work for this exercise because correct output can vary
+# a simple diff can't work for this exercise because correct output can vary
+# see runWithChecking in main.hs
 
 # test : main test_input.txt test_output.txt
 # 	@ TMP=$$(mktemp); \
@@ -16,11 +17,14 @@ all : main
 # 	fi; \
 # 	rm -f $$TMP
 
-t : main 1.in 1.out
+t1 : main 1.in 1.out
 	./main --check 1.out < 1.in
 
-t1 : main 1.in 1.out
-	vimdiff 1.out <(timeout 3 ./main < 1.in)
+t2 : main 2.in 2.out
+	./main --check 2.out < 2.in
+
+# t : main 1.in 1.out
+# 	vimdiff 1.out <(timeout 3 ./main < 1.in)
 
 clean :
 	rm -f main *.o *.hi
