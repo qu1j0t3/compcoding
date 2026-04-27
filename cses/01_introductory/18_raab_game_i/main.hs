@@ -3,6 +3,10 @@
 -- Solution to CSES Introductory Problems Raab Game I
 -- https://cses.fi/problemset/task/3399
 
+-- Run: ./main < 1.in --test 1.out
+-- problems will be read from 1.in and solved,
+-- then checked against the solutions file 1.out
+
 {-# LANGUAGE LambdaCase #-}
 
 import System.Environment
@@ -70,17 +74,18 @@ green str   = ansiGreen ++ str ++ ansiReset
   and player 2 plays a 'left' rotation by n of this, e.g.  4 5 6 7 8 1 2 3
   then scores are distributed n to player 1                2 2 2 2 2 1 1 1
   Then we have to deal with corner cases:
-  - if there is 1 card left, after playing all draws, then it can never score a point
-    to a player, and so targets must be zero for the game to be valid
-  - if there is more than one card left after playing draws, then neither target can be zero,
-    because every play must score a point
+  1. if there is 1 card left, after playing all draws, then it can never score a point
+     to a player, and so targets must be zero for the game to be valid
+  2. if there is more than one card left after playing draws, then neither target can be zero,
+     because every play must score a point (no player can lose all games)
 -}
 
 solve :: [Int] -> Maybe [(Int,Int)]
 solve [cards, target1, target2] =
   let scoringPlays = target1 + target2
   in if scoringPlays <= cards
-        && (target1 + target2 == 0 || (scoringPlays > 1 && target1 > 0 && target2 > 0))
+        && (target1 + target2 == 0 -- a game of all draws is valid
+            || (scoringPlays > 1 && target1 > 0 && target2 > 0))
      then Just $ [if a > scoringPlays then (a,a) else (a,1+((a-1-target2) `mod` scoringPlays)) | a <- [1..cards]]
      else Nothing
 
@@ -103,11 +108,6 @@ checkGame n t1 t2 game =
   then let scores = map (\(a,b) -> (a>b,b>a)) game
        in Just $ length (filter fst scores) == t1 && length (filter snd scores) == t2
   else Nothing
-
-
--- Run: ./main < 1.in --test 1.out
--- problems will be read from input and solved,
--- then checked against the solutions file given
 
 --failedCheck str = putStrLn $ red str
 failedCheck = failWithMessage
