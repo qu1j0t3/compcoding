@@ -1,7 +1,7 @@
 SHELL=bash
 
 % : %.hs
-	ghc -O -XSafe -W -Wall -Wno-missing-signatures $<
+	ghc -O -W -Wall -XSafe -XNoGeneralizedNewtypeDeriving $<
 
 all : main
 
