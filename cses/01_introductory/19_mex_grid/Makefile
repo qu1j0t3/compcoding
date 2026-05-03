@@ -1,7 +1,7 @@
 SHELL=bash
 
 % : %.hs
-	ghc -O -W -Wall -Wno-missing-signatures $<
+	ghc -O -XSafe -W -Wall -Wno-missing-signatures $<
 
 all : main
 
