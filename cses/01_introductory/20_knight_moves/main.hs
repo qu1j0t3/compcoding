@@ -8,12 +8,16 @@
 
 -- import Data.Foldable
 -- import Data.List
-import Data.Bits
+-- import Data.Bits
+
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
+
 import Data.Set (Set)
 import qualified Data.Set as Set
+
 import Data.Maybe
+
 -- import Data.IntSet (IntSet, fromList)
 -- import qualified Data.IntSet as IntSet
 
@@ -60,9 +64,39 @@ moves n i j acc =
     [] -> Nothing
     xs -> Just $ minimum xs
 
+
 solve :: Int -> [[Int]]
 solve n = [catMaybes [moves n i j (Set.singleton (i,j)) | j <- [1..n]] | i <- [1..n]]
 
 
+-- memoised version
+
+type SolutionMap = Map (Int,Int) Int
+
+movesM :: SolutionMap -> Int -> Int -> Int -> Set (Int,Int) -> (Maybe Int,SolutionMap)
+movesM m _ 1 1 _       = (Just 0,m)
+movesM m n i j visited | i<1 || j<1 || i>n || j>n || Set.member (i,j) visited = (Nothing,m)
+                       | otherwise =
+  case Map.lookup (i,j) m of
+    Just v -> (Just v,m)
+    Nothing -> let knightMoves = [ (i+a,j+b) | a <- [-2..2], b <- [-2..2], abs a + abs b == 3 ]
+                   visited' = Set.insert (i,j) visited
+                   (counts,m') = foldr (\ (i',j') (cs,mm) ->
+                                          case movesM mm n i' j' visited' of
+                                            (Just c,newMap) -> (c+1:cs,newMap)
+                                            (Nothing,newMap) -> (cs,newMap))
+                                       ([],m)
+                                       knightMoves
+               in case counts of
+                [] -> (Nothing,m')
+                solutions -> let s = minimum solutions in (Just s, Map.insert (i,j) s m')
+
+
+solveM :: Int -> [[Int]]
+-- trick is to populate the map from (n,n) first of all
+solveM n = let m = snd $ movesM Map.empty n n n Set.empty
+           in [catMaybes [Map.lookup (i,j) m | j <- [1..n]] | i <- [1..n]]
+
+
 main :: IO ()
-main = getLine >>= (\ input -> sequence_ $ fmap putStrLn (map (\r -> unwords $ map show r) (solve $ read input)))
+main = getLine >>= (\ input -> sequence_ $ fmap putStrLn (map (\r -> unwords $ map show r) (solveM $ read input)))
