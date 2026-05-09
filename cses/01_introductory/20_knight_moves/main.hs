@@ -18,8 +18,8 @@ import qualified Data.Set as Set
 
 import Data.Maybe
 
--- import Data.IntSet (IntSet, fromList)
--- import qualified Data.IntSet as IntSet
+import Data.IntSet (IntSet, fromList)
+import qualified Data.IntSet as IntSet
 
 
 -- Solution to CSES Introductory Problems Knight Moves Grid
@@ -73,14 +73,14 @@ solve n = [[moves n i j (Set.singleton (i,j)) | j <- [1..n]] | i <- [1..n]]
 
 type SolutionMap = Map (Int,Int) Int
 
-movesM :: SolutionMap -> Int -> Int -> Int -> Set (Int,Int) -> (Maybe Int,SolutionMap)
+movesM :: SolutionMap -> Int -> Int -> Int -> IntSet -> (Maybe Int,SolutionMap)
 movesM m _ 1 1 _       = (Just 0,m)
-movesM m n i j visited | i<1 || j<1 || i>n || j>n || Set.member (i,j) visited = (Nothing,m)
+movesM m n i j visited | i<1 || j<1 || i>n || j>n || IntSet.member (i*n+j) visited = (Nothing,m)
                        | otherwise =
   case Map.lookup (i,j) m of
     Nothing ->
       let knightMoves = [ (i+a,j+b) | a <- [-2..2], b <- [-2..2], abs a + abs b == 3 ]
-          visited' = Set.insert (i,j) visited
+          visited' = IntSet.insert (i*n+j) visited
           (counts,m') = foldr (\ (i',j') (cs,mm) ->
                                 case movesM mm n i' j' visited' of
                                   (Just c,newMap) -> (c+1:cs,newMap)
@@ -94,7 +94,7 @@ movesM m n i j visited | i<1 || j<1 || i>n || j>n || Set.member (i,j) visited = 
 
 
 solveM :: Int -> [[Maybe Int]]
-solveM n = [[fst $ movesM Map.empty n i j Set.empty | j <- [1..n]] | i <- [1..n]]
+solveM n = [[fst $ movesM Map.empty n i j IntSet.empty | j <- [1..n]] | i <- [1..n]]
 
 
 main :: IO ()
