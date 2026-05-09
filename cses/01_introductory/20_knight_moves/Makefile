@@ -14,5 +14,8 @@ test : main test_input.txt test_output.txt
 	fi; \
 	rm -f $$TMP
 
+t : main test_input.txt test_output.txt
+	diff --color=auto -y test_output.txt <(echo ACTUAL; timeout 3 ./main < test_input.txt)
+
 clean :
 	rm -f main *.o *.hi
