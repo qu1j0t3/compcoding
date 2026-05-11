@@ -1,7 +1,9 @@
 SHELL=bash
 
+GHC=$$(ghcup whereis ghc 9.12.4)
+
 % : %.hs
-	ghc -O -W -Wall -XSafe -XNoGeneralizedNewtypeDeriving $<
+	$(GHC) -O -W -Wall -XSafe -XNoGeneralizedNewtypeDeriving $<
 
 all : main
 
