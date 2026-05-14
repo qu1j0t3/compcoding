@@ -57,11 +57,11 @@ import qualified Data.IntSet as IntSet
 moves :: Int -> Int -> Int -> Set (Int,Int) -> Maybe Int
 moves _ 1 1 _   = Just 0
 moves n i j acc =
-  case catMaybes [ (1+) <$> moves n (i+a) (j+b) (Set.insert (i+a,j+b) acc)
+  case catMaybes [ moves n (i+a) (j+b) (Set.insert (i+a,j+b) acc)
                    | a <- [-2..2], b <- [-2..2], abs a + abs b == 3,
                      i+a >= 1, i+a <= n, j+b >= 1, j+b <= n, Set.notMember (i+a,j+b) acc ] of
     [] -> Nothing
-    xs -> Just $ minimum xs
+    xs -> Just $ 1 + minimum xs
 
 
 solve :: Int -> [[Maybe Int]]
@@ -72,10 +72,6 @@ solve n = [[moves n i j (Set.singleton (i,j)) | j <- [1..n]] | i <- [1..n]]
 -- excessively slow when n=17
 
 type SolutionMap = Map (Int,Int) Int
-
--- | The eight valid moves of a chess knight, starting from (0,0)
-knightMoves :: [(Int,Int)]
-knightMoves = [ (a,b) | a <- [-2..2], b <- [-2..2], abs a + abs b == 3 ]
 
 -- Count knight moves from given square i,j in order to reach origin 1,1
 -- (the base case: always 0 moves).
@@ -93,40 +89,27 @@ movesM :: SolutionMap -- ^ solutions computed so far, as a map from position to 
        -> IntSet      -- ^ set of squares already visited in this evaluation, as a set of integer labels
        -> (Maybe Int,SolutionMap) -- ^ return count (if possible from given square) and updated map
 movesM m _ 1 1 _       = (Just 0,m)
-movesM m n i j visited | i<1 || j<1 || i>n || j>n || IntSet.member (i*n+j) visited = (Nothing,m)
+movesM m n i j visited | i<1 || i>n || j<1 || j>n || IntSet.member (i*n+j) visited = (Nothing,m)
                        | otherwise =
   case Map.lookup (i,j) m of
-    Nothing ->
-      -- This is the recursive case:
-      -- count moves from (i,j) to (1,1) by taking minimum of all possible paths
-      -- IS THE BUG THAT WE CAN ADD TO VISITED SET
-      -- YET NOT SET AN ENTRY IN THE MAP?
+    Nothing -> -- This is the recursive case:
+               -- count moves from (i,j) to (1,1) by taking minimum of all possible paths
+               -- use a fold to accumulate state (solution map) over all new directions
       let visited' = IntSet.insert (i*n+j) visited
-          -- use a fold to accumulate state (solution map)
-          -- over all new directions
-          (paths,m') = foldr (\  (a,b) (cs,mm) ->
-                                      case movesM mm n (i+a) (j+b) visited' of
-                                        (Just c,newMap)  -> (c:cs,newMap)
-                                        (Nothing,newMap) -> (cs,newMap))
-                              ([],m)
-                              knightMoves
+          (paths,m') = foldr (\ (a,b) (cs,mm) ->
+                               case movesM mm n (i+a) (j+b) visited' of
+                                 (Just c,newMap)  -> (c:cs,newMap)
+                                 (Nothing,newMap) -> (cs,newMap))
+                             ([],m)
+                             [ (a,b) | a <- [-2..2], b <- [-2..2], abs a + abs b == 3 ]
       in case paths of
         [] -> (Nothing,m')
         ps -> let s = 1 + minimum ps in (Just s, Map.insert (i,j) s m')
     sol -> (sol,m) -- return cached solution at (i,j)
 
--- solveM :: Int -> [[Maybe Int]]
--- solveM n = [[fst $ movesM Map.empty n i j IntSet.empty | j <- [1..n]] | i <- [1..n]]
-
 -- | Produce 2D solution for board of size n
 solveM :: Int -> [[Maybe Int]]
-solveM n = let m = foldr (\ i m' ->
-                            foldr (\ j m'' -> snd $ movesM m'' n i j IntSet.empty)
-                                  m'
-                                  [1..n])
-                         Map.empty
-                         [1..n]
-           in [ [fst $ movesM m n i j IntSet.empty | j <- [1..n]] | i <- [1..n] ]
+solveM n = [[fst $ movesM Map.empty n i j IntSet.empty | j <- [1..n]] | i <- [1..n]]
 
 
 main :: IO ()
