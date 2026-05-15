@@ -1,6 +1,6 @@
 SHELL=bash
 
-GHC=$$(ghcup whereis ghc 9.12.4)
+GHC := $(shell ghcup whereis ghc 9.12.4)
 
 % : %.hs
 	$(GHC) -O -W -Wall -XSafe -XNoGeneralizedNewtypeDeriving $<

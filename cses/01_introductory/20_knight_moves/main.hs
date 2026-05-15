@@ -73,43 +73,37 @@ solve n = [[moves n i j (Set.singleton (i,j)) | j <- [1..n]] | i <- [1..n]]
 
 type SolutionMap = Map (Int,Int) Int
 
--- Count knight moves from given square i,j in order to reach origin 1,1
--- (the base case: always 0 moves).
--- At each square i,j that is not the origin,
--- we take the smallest solution from each of the valid 8 knight moves from that square,
--- and add one. we then update the solution map for i,j (memoisation).
--- to prevent loops, we avoid re-evaluating any square already visited in this path.
-
--- | Compute minimum number of knight moves from square (i,j) to origin (1,1)
--- Memoisation is used to make this more efficient.
+-- | Starting from origin 1,1, populate map with move counts, spreading outwards
+--   from the current square by using every knight move to an unvisited square.
 movesM :: SolutionMap -- ^ solutions computed so far, as a map from position to move count
        -> Int         -- ^ size of board
-       -> Int         -- ^ row index i
-       -> Int         -- ^ column index j
-       -> IntSet      -- ^ set of squares already visited in this evaluation, as a set of integer labels
-       -> (Maybe Int,SolutionMap) -- ^ return count (if possible from given square) and updated map
-movesM m _ 1 1 _       = (Just 0,m)
-movesM m n i j visited | i<1 || i>n || j<1 || j>n || IntSet.member (i*n+j) visited = (Nothing,m)
-                       | otherwise =
-  case Map.lookup (i,j) m of
-    Nothing -> -- This is the recursive case:
-               -- count moves from (i,j) to (1,1) by taking minimum of all possible paths
-               -- use a fold to accumulate state (solution map) over all new directions
-      let visited' = IntSet.insert (i*n+j) visited
-          (paths,m') = foldr (\ (a,b) (cs,mm) ->
-                               case movesM mm n (i+a) (j+b) visited' of
-                                 (Just c,newMap)  -> (c:cs,newMap)
-                                 (Nothing,newMap) -> (cs,newMap))
-                             ([],m)
-                             [ (a,b) | a <- [-2..2], b <- [-2..2], abs a + abs b == 3 ]
-      in case paths of
-        [] -> (Nothing,m')
-        ps -> let s = 1 + minimum ps in (Just s, Map.insert (i,j) s m')
-    sol -> (sol,m) -- return cached solution at (i,j)
+       -> [(Int,Int)]
+       -> Int         -- ^ move count
+       -> SolutionMap -- ^ return updated map
+
+
+movesM m n squares moves =
+  let validMoves = [(i',j') | (i,j) <- squares,
+                              a <- [-2..2], b <- [-2..2], abs a + abs b == 3,
+                              let i'=i+a, let j'=j+b,
+                              i' >= 1, i' <= n, j' >= 1, j' <= n,
+                              Map.notMember (i',j') m ]
+  in foldr (\ (i',j') m' -> movesM m' n validMoves (moves+1))
+           (foldr (\ pos m' -> Map.insert pos moves m') m validMoves) -- update map with counts for this depth
+           validMoves
+
+-- N.B. THIS IS WRONG BECAUSE IT'S DEPTH FIRST.
+--      It follows one single path until the board is full,
+--      filling the board with move counts up to 55
+movesMdfs m n i j moves | i<1 || i>n || j<1 || j>n || Map.member (i,j) m = m
+                        | otherwise = foldr (\ (a,b) m' -> movesMdfs m' n (i+a) (j+b) (moves+1))
+                                            (Map.insert (i,j) moves m)
+                                            [(a,b) | a <- [-2..2], b <- [-2..2], abs a + abs b == 3]
 
 -- | Produce 2D solution for board of size n
 solveM :: Int -> [[Maybe Int]]
-solveM n = [[fst $ movesM Map.empty n i j IntSet.empty | j <- [1..n]] | i <- [1..n]]
+solveM n = [[Map.lookup (i,j) m | j <- [1..n]] | i <- [1..n]]
+           where m = movesM (Map.singleton (1,1) 0) n [(1,1)] 1
 
 
 main :: IO ()
