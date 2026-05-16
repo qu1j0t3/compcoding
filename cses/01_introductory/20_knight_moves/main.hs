@@ -18,8 +18,8 @@ import qualified Data.Set as Set
 
 import Data.Maybe
 
-import Data.IntSet (IntSet, fromList)
-import qualified Data.IntSet as IntSet
+-- import Data.IntSet (IntSet, fromList)
+-- import qualified Data.IntSet as IntSet
 
 
 -- Solution to CSES Introductory Problems Knight Moves Grid
@@ -68,8 +68,15 @@ solve :: Int -> [[Maybe Int]]
 solve n = [[moves n i j (Set.singleton (i,j)) | j <- [1..n]] | i <- [1..n]]
 
 
--- memoised version
--- excessively slow when n=17
+
+-- N.B. THIS IS WRONG BECAUSE IT'S DEPTH FIRST.
+--      It follows one single path until the board is full,
+--      with move counts up to 55
+movesMdfs m n i j moveCount | i<1 || i>n || j<1 || j>n || Map.member (i,j) m = m
+                            | otherwise = foldr (\ (a,b) m' -> movesMdfs m' n (i+a) (j+b) (moveCount+1))
+                                                (Map.insert (i,j) moveCount m)
+                                                [(a,b) | a <- [-2..2], b <- [-2..2], abs a + abs b == 3]
+
 
 type SolutionMap = Map (Int,Int) Int
 
@@ -77,28 +84,21 @@ type SolutionMap = Map (Int,Int) Int
 --   from the current square by using every knight move to an unvisited square.
 movesM :: SolutionMap -- ^ solutions computed so far, as a map from position to move count
        -> Int         -- ^ size of board
-       -> [(Int,Int)]
-       -> Int         -- ^ move count
+       -> [(Int,Int)] -- ^ next squares to explore
+       -> Int         -- ^ move count (recursion depth)
        -> SolutionMap -- ^ return updated map
 
+movesM m n [] moveCount = m
+movesM m n squares moveCount =
+  let validMoves = [ (i',j') | (i,j) <- squares,
+                               a <- [-2..2], b <- [-2..2], abs a + abs b == 3,
+                               let i'=i+a, let j'=j+b,
+                               i' >= 1, i' <= n, j' >= 1, j' <= n,
+                               Map.notMember (i',j') m ]
+      -- update map with counts for this depth
+      newMap = foldr (\ pos m' -> Map.insert pos moveCount m') m validMoves
+  in movesM newMap n validMoves (moveCount+1)
 
-movesM m n squares moves =
-  let validMoves = [(i',j') | (i,j) <- squares,
-                              a <- [-2..2], b <- [-2..2], abs a + abs b == 3,
-                              let i'=i+a, let j'=j+b,
-                              i' >= 1, i' <= n, j' >= 1, j' <= n,
-                              Map.notMember (i',j') m ]
-  in foldr (\ (i',j') m' -> movesM m' n validMoves (moves+1))
-           (foldr (\ pos m' -> Map.insert pos moves m') m validMoves) -- update map with counts for this depth
-           validMoves
-
--- N.B. THIS IS WRONG BECAUSE IT'S DEPTH FIRST.
---      It follows one single path until the board is full,
---      filling the board with move counts up to 55
-movesMdfs m n i j moves | i<1 || i>n || j<1 || j>n || Map.member (i,j) m = m
-                        | otherwise = foldr (\ (a,b) m' -> movesMdfs m' n (i+a) (j+b) (moves+1))
-                                            (Map.insert (i,j) moves m)
-                                            [(a,b) | a <- [-2..2], b <- [-2..2], abs a + abs b == 3]
 
 -- | Produce 2D solution for board of size n
 solveM :: Int -> [[Maybe Int]]
