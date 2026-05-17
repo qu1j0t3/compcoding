@@ -78,6 +78,8 @@ movesMdfs m n i j moveCount | i<1 || i>n || j<1 || j>n || Map.member (i,j) m = m
                                                 [(a,b) | a <- [-2..2], b <- [-2..2], abs a + abs b == 3]
 
 
+-- This gets uncomfortably slow by low 20's:
+
 type SolutionMap = Map (Int,Int) Int
 
 -- | Starting from origin 1,1, populate map with move counts, spreading outwards
@@ -88,7 +90,7 @@ movesM :: SolutionMap -- ^ solutions computed so far, as a map from position to 
        -> Int         -- ^ move count (recursion depth)
        -> SolutionMap -- ^ return updated map
 
-movesM m n [] moveCount = m
+movesM m _ [] _ = m
 movesM m n squares moveCount =
   let validMoves = [ (i',j') | (i,j) <- squares,
                                a <- [-2..2], b <- [-2..2], abs a + abs b == 3,
@@ -106,7 +108,20 @@ solveM n = [[Map.lookup (i,j) m | j <- [1..n]] | i <- [1..n]]
            where m = movesM (Map.singleton (1,1) 0) n [(1,1)] 1
 
 
+-- | Produce string for board square including ANSI colour code based on
+-- | count in the square. Also pad short numbers so columns align.
+prettyWidth = 2
+prettyPrint :: Maybe Int -> String
+prettyPrint (Just c) = replicate (prettyWidth - length (show c)) ' '
+                       ++ "\27[3" ++ show (1 + c `mod` 8) ++ "m"
+                       ++ show c
+prettyPrint Nothing  = replicate (prettyWidth - 1) ' ' ++ "-"
+
+
+plainPrint :: Maybe Int -> String
+plainPrint (Just c) = show c  -- even though the problem doesn't call for it,
+plainPrint Nothing  = "-"     -- this allows us to correctly print boards smaller than 4x4
+
+
 main :: IO ()
-main = getLine >>= (\ input -> mapM_ (putStrLn . unwords . map printSquare) (solveM $ read input))
-  where printSquare (Just c) = show c  -- even though the problem doesn't call for it,
-        printSquare Nothing  = "-"     -- this allows us to correctly print boards smaller than 4x4
+main = getLine >>= (\ input -> mapM_ (putStrLn . unwords . map prettyPrint) (solveM $ read input))
