@@ -3,6 +3,7 @@
 {-# LANGUAGE LambdaCase #-}
 
 import System.Environment
+import System.Environment
 -- import System.Exit
 -- import System.IO
 
@@ -82,19 +83,36 @@ movesMdfs m n i j moveCount | i<1 || i>n || j<1 || j>n || Map.member (i,j) m = m
 
 -- | Starting from origin 1,1, populate map with move counts, spreading outwards
 --   from the current square by using every knight move to an unvisited square.
+movesM :: SolutionMap  -- ^ solutions computed so far, as a map from position to move count
+       -> Int          -- ^ rows in board
+       -> Int          -- ^ columns in board
+       -> [(Int,Int)]  -- ^ next squares to explore
+       -> Int          -- ^ move count (recursion depth)
+       -> SolutionMap  -- ^ return updated map
 
+movesM m _ _ [] _ = m
+movesM m n n' squares moveCount =
 movesM m _ _ [] _ = m
 movesM m n n' squares moveCount =
   let validMoves = [ (i',j') | (i,j) <- squares,
                                a <- [-2..2], b <- [-2..2], abs a + abs b == 3,
                                let i'=i+a, let j'=j+b,
                                i' >= 1, i' <= n, j' >= 1, j' <= n',
+                               i' >= 1, i' <= n, j' >= 1, j' <= n',
                                Map.notMember (i',j') m ]
       -- update map with counts for this depth
       newMap = foldr (\ pos m' -> Map.insert pos moveCount m') m validMoves
   in movesM newMap n n' validMoves (moveCount+1)
+  in movesM newMap n n' validMoves (moveCount+1)
 
 
+-- | Produce 2D solution for board of size n x n'
+solveM2 :: Int -> Int -> [[Maybe Int]]
+solveM2 n n' = [[Map.lookup (i,j) m | j <- [1..n']] | i <- [1..n]]
+              where m = movesM (Map.singleton (1,1) 0) n n' [(1,1)] 1
+
+-- | Solve square board of size n
+solveM n = solveM2 n n
 -- | Produce 2D solution for board of size n x n'
 solveM2 :: Int -> Int -> [[Maybe Int]]
 solveM2 n n' = [[Map.lookup (i,j) m | j <- [1..n']] | i <- [1..n]]
@@ -107,22 +125,26 @@ solveM n = solveM2 n n
 -- | Produce string for board square including ANSI colour code based on
 -- | count in the square. Also pad short numbers so columns align.
 prettyWidth = 2
-prettyPrint :: Maybe Int -> String
 prettyPrint (Just c) = replicate (prettyWidth - length (show c)) ' '
                        ++ "\27[3" ++ show (1 + c `mod` 8) ++ "m"
                        ++ show c
                        ++ "\27[0m"
+                       ++ "\27[0m"
 prettyPrint Nothing  = replicate (prettyWidth - 1) ' ' ++ "-"
 
 
-plainPrint :: Maybe Int -> String
 plainPrint (Just c) = show c  -- even though the problem doesn't call for it,
 plainPrint Nothing  = "-"     -- this allows us to correctly print boards smaller than 4x4
 
 
 -- | Running with args n n' produces a colour coded board of size n x n'
 -- | Without args, expects a line on standard input with a square board size (CSES judge format)
+-- | Running with args n n' produces a colour coded board of size n x n'
+-- | Without args, expects a line on standard input with a square board size (CSES judge format)
 main :: IO ()
+main = getArgs >>= (
+  \case []     -> getLine >>= (\ input -> mapM_ (putStrLn . unwords . map plainPrint) (solveM $ read input))
+        [n,n'] -> mapM_ (putStrLn . unwords . map prettyPrint) (solveM2 (read n) (read n')))
 main = getArgs >>= (
   \case []     -> getLine >>= (\ input -> mapM_ (putStrLn . unwords . map plainPrint) (solveM $ read input))
         [n,n'] -> mapM_ (putStrLn . unwords . map prettyPrint) (solveM2 (read n) (read n')))
