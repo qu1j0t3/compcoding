@@ -1,9 +1,17 @@
 SHELL=bash
 
+# About packages:
+# https://downloads.haskell.org/ghc/latest/docs/users_guide/packages.html
+
+# To see which packages are currently available, use the ghc-pkg list command
+
+# To see which modules are provided by a package use
+#   ghc-pkg field <package> exposed-modules
+
 GHC := $(shell ghcup whereis ghc 9.12.4)
 
 % : %.hs
-	$(GHC) -O -W -Wall -XSafe -XNoGeneralizedNewtypeDeriving $<
+	$(GHC) -o $@ $< -package containers -O -W -Wall -Wno-unused-top-binds -XSafe -XNoGeneralizedNewtypeDeriving
 
 all : main
 

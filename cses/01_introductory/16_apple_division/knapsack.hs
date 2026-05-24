@@ -11,8 +11,10 @@
 -- Given a list of weights [w1,w2,...,wn], determine all sums
 -- that can be constructed using the weights.
 
-import Data.IntSet (IntSet)
-import qualified Data.IntSet as IntSet
+-- import Data.IntSet (IntSet)
+-- import qualified Data.IntSet as IntSet
+
+import System.Environment (getArgs)
 
 -- |Can the given weight be constructed by combining weights from a list
 possible :: [Int]   -- ^the list of usable weights
@@ -36,4 +38,4 @@ solve :: [Int] -> (Int,[Char])
 solve ws = (sum ws, map (ch . possible ws) [0..sum ws])
 
 main :: IO ()
-main = getLine >>= (print . solve . (map read) . words)
+main = getArgs >>= (print . solve . map read)

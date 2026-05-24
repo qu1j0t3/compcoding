@@ -72,7 +72,7 @@ solve n = [[moves n i j (Set.singleton (i,j)) | j <- [1..n]] | i <- [1..n]]
 
 -- N.B. THIS IS WRONG BECAUSE IT'S DEPTH FIRST.
 --      It follows one single path until the board is full,
---      with move counts up to 55
+--      with move counts up to 55 on 8x8 board
 movesMdfs m n i j moveCount | i<1 || i>n || j<1 || j>n || Map.member (i,j) m = m
                             | otherwise = foldr (\ (a,b) m' -> movesMdfs m' n (i+a) (j+b) (moveCount+1))
                                                 (Map.insert (i,j) moveCount m)
