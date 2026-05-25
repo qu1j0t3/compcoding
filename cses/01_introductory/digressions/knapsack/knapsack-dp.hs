@@ -20,19 +20,6 @@ import System.IO
 import Data.List.Split
 
 
-ansiReset = "\27[0m"
-ansiRed   = "\27[31m"
-ansiGreen = "\27[32m"
-ansiCyan  = "\27[36m"
-ansiBold  = "\27[1m"
-
-red str     = ansiRed ++ str ++ ansiReset
-cyan str    = ansiCyan ++ str ++ ansiReset
-redBold str = ansiBold ++ ansiRed ++ str ++ ansiReset
-green str   = ansiGreen ++ str ++ ansiReset
-
-
-
 -- Inputs:  capacity of knapsack; list of n item values
 
 -- Problem: work out the selection of items (among 2^n different selections)
@@ -58,10 +45,10 @@ instance Read Item where
 --   while not exceeding knapsack capacity.
 
 sumWeight :: [Item] -> Int
-sumWeight items = sum (map weight items)
+sumWeight items = sum $ map weight items
 
 sumValues :: [Item] -> Int
-sumValues items = sum (map value items)
+sumValues items = sum $ map value items
 
 greaterValue :: Maybe [Item] -> Maybe [Item] -> Maybe [Item]
 greaterValue Nothing Nothing = Nothing
@@ -76,18 +63,19 @@ solve :: Int -> [Item] -> Maybe [Item]
 solve capacity items = step items []
   where step :: [Item] -> [Item] -> Maybe [Item]
         step [] carrying = Just carrying
-        step (i:rest) carrying | weight i + sumWeight carrying > capacity = Nothing
+        step (i:rest) carrying | weight i + sumWeight carrying > capacity = step rest carrying
                                | otherwise = greaterValue (step rest (i:carrying)) (step rest carrying)
 
 main :: IO ()
 main = getArgs >>= (
     \case (capacity:items) ->
-            case solve (read capacity) (map read items) of
-              Just sol -> putStrLn ("Capacity: " ++ show capacity)
+            let cap = read capacity
+            in case solve cap (map read items) of
+              Just sol -> putStrLn ("Capacity: " ++ capacity)
                           >> putStrLn "Carry:"
                           >> mapM_ (putStrLn . printItem) sol
                           >> putStrLn ("Value: " ++ show (sum $ map value sol))
               Nothing -> putStrLn "No solution"
-          _ -> hPutStrLn stderr (redBold "args: capacity weight1,value1 weight2,value2 ...")
+          _ -> hPutStrLn stderr "args: capacity weight1,value1 weight2,value2 ..."
                >> exitWith (ExitFailure 1)
   )
