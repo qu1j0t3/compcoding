@@ -7,8 +7,6 @@
 -- Given a list of weights [w1,w2,...,wn], determine all sums
 -- that can be constructed using the weights.
 
--- import Data.IntSet (IntSet)
--- import qualified Data.IntSet as IntSet
 
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE InstanceSigs #-}
@@ -44,24 +42,19 @@ instance Read Item where
 --   return maximum value achieved by either selecting, or not selecting each item
 --   while not exceeding knapsack capacity.
 
-sumWeight :: [Item] -> Int
-sumWeight items = sum $ map weight items
-
-sumValues :: [Item] -> Int
-sumValues items = sum $ map value items
-
 greaterValue :: [Item] -> [Item] -> [Item]
 greaterValue ls rs = if sumValues ls > sumValues rs then ls else rs
+  where sumValues items = sum $ map value items
 
 printItem :: Item -> String
 printItem (Item w v) = "  (weight: " ++ show w ++ " value: " ++ show v ++ ")"
 
-solve :: Int -> [Item] -> [Item]
-solve capacity items = step items []
-  where step :: [Item] -> [Item] -> [Item]
-        step [] carrying = carrying
-        step (i:rest) carrying | weight i + sumWeight carrying > capacity = step rest carrying
-                               | otherwise = greaterValue (step rest (i:carrying)) (step rest carrying)
+solve :: [Item] -> Int -> [Item]
+solve items capacity  = step items capacity []
+  where step :: [Item] ->  Int -> [Item] -> [Item]
+        step [] _ carrying = carrying
+        step (i:rest) cap carrying | weight i > cap = step rest cap carrying
+                                   | otherwise = greaterValue (step rest (cap - weight i) (i:carrying)) (step rest cap carrying)
 
 -- e.g.   cabal run knapsack-dp 6  1,10 3,40 2,15 1,15
 
@@ -69,7 +62,7 @@ main :: IO ()
 main = getArgs >>= (
     \case (capacity:items) ->
             let cap = read capacity
-                sol = solve cap (map read items)
+                sol = solve (map read items) cap
             in putStrLn ("Capacity: " ++ show cap)
                >> putStrLn "Carry:"
                >> mapM_ (putStrLn . printItem) sol
