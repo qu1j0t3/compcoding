@@ -50,32 +50,30 @@ sumWeight items = sum $ map weight items
 sumValues :: [Item] -> Int
 sumValues items = sum $ map value items
 
-greaterValue :: Maybe [Item] -> Maybe [Item] -> Maybe [Item]
-greaterValue Nothing Nothing = Nothing
-greaterValue (Just ls) (Just rs) = Just $ if sumValues ls > sumValues rs then ls else rs
-greaterValue ls Nothing = ls
-greaterValue Nothing rs = rs
+greaterValue :: [Item] -> [Item] -> [Item]
+greaterValue ls rs = if sumValues ls > sumValues rs then ls else rs
 
 printItem :: Item -> String
 printItem (Item w v) = "  (weight: " ++ show w ++ " value: " ++ show v ++ ")"
 
-solve :: Int -> [Item] -> Maybe [Item]
+solve :: Int -> [Item] -> [Item]
 solve capacity items = step items []
-  where step :: [Item] -> [Item] -> Maybe [Item]
-        step [] carrying = Just carrying
+  where step :: [Item] -> [Item] -> [Item]
+        step [] carrying = carrying
         step (i:rest) carrying | weight i + sumWeight carrying > capacity = step rest carrying
                                | otherwise = greaterValue (step rest (i:carrying)) (step rest carrying)
+
+-- e.g.   cabal run knapsack-dp 6  1,10 3,40 2,15 1,15
 
 main :: IO ()
 main = getArgs >>= (
     \case (capacity:items) ->
             let cap = read capacity
-            in case solve cap (map read items) of
-              Just sol -> putStrLn ("Capacity: " ++ capacity)
-                          >> putStrLn "Carry:"
-                          >> mapM_ (putStrLn . printItem) sol
-                          >> putStrLn ("Value: " ++ show (sum $ map value sol))
-              Nothing -> putStrLn "No solution"
+                sol = solve cap (map read items)
+            in putStrLn ("Capacity: " ++ show cap)
+               >> putStrLn "Carry:"
+               >> mapM_ (putStrLn . printItem) sol
+               >> putStrLn ("Value: " ++ show (sum $ map value sol))
           _ -> hPutStrLn stderr "args: capacity weight1,value1 weight2,value2 ..."
                >> exitWith (ExitFailure 1)
   )
