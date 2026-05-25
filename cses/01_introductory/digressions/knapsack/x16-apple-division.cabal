@@ -2,12 +2,10 @@ cabal-version:   3.0
 name:            x16-apple-division
 version:         0.1.0.0
 license:         GPL-2.0-only
-license-file:    LICENSE
 author:          Toby Thain
 maintainer:      toby@telegraphics.net
 category:        Puzzles
 build-type:      Simple
-extra-doc-files: CHANGELOG.md
 
 common warnings
     ghc-options: -Wall -Wextra -O
@@ -16,5 +14,12 @@ executable knapsack
     import:           warnings
     main-is:          knapsack.hs
     build-depends:    containers ^>=0.7, base ^>=4.21.2.0
+    hs-source-dirs:   .
+    default-language: Haskell2010
+
+executable knapsack-dp
+    import:           warnings
+    main-is:          knapsack-dp.hs
+    build-depends:    split, containers ^>=0.7, base ^>=4.21.2.0
     hs-source-dirs:   .
     default-language: Haskell2010
