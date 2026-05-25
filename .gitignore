@@ -2,3 +2,4 @@
 *.hi
 main
 .DS_Store
+dist-newstyle

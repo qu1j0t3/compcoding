@@ -68,6 +68,8 @@ cradle:
 
 (This can be extended for multiple-component projects.)
 
+* Also see https://discourse.haskell.org/t/resolved-hls-works-inconsistently-or-not-at-all-inside-cabal/8162/6
+
 ### Basic tasks
 
 ```sh

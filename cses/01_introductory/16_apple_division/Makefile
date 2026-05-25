@@ -1,7 +1,7 @@
 % : %.hs
 	ghc -O -Wall -Wextra $<
 
-all : main knapsack lattice mincoins lcs
+all : main lattice mincoins lcs
 
 test : main test_input.txt
 	@ TMP=$$(mktemp); \
@@ -13,4 +13,4 @@ test : main test_input.txt
 	rm -f $$TMP
 
 clean :
-	rm -f main knapsack lattice mincoins lcs *.o *.hi
+	rm -fr dist-newstyle main lattice mincoins lcs *.o *.hi
