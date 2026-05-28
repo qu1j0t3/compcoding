@@ -74,11 +74,11 @@ solvePrint cap items =
       >> putStrLn ("Weight: " ++ show (sum $ map weight sol))
       >> putStrLn ("Value: " ++ show (sum $ map value sol))
 
-randItems :: [Int] -> Int -> Int -> [Item]
-randItems (w:k:rest) cap maxValue =
-  Item wt (density*wt) : randItems rest cap maxValue
+randItems :: [Int] -> Int -> [Item]
+randItems (w:k:k2:rest) cap =
+  Item wt (density*wt) : randItems rest cap
   where wt = 1 + (abs w `mod` cap)
-        density = 10 + (abs k `mod` 4)
+        density = 2 + ceiling (log (fromIntegral (abs k) / fromIntegral (abs k2)))
 
 main :: IO ()
 main = getArgs >>= (
@@ -86,7 +86,7 @@ main = getArgs >>= (
       ["--random", capacity, n] ->
         newStdGen >>= \ gen ->
           let cap = read capacity
-              items = take (read n) (randItems (randoms gen :: [Int]) cap 20)
+              items = take (read n) (randItems (randoms gen :: [Int]) cap)
           in solvePrint cap items
       (capacity:items) -> solvePrint (read capacity) (map read items)
       _ -> hPutStrLn stderr "args: capacity weight1,value1 weight2,value2 ..."
