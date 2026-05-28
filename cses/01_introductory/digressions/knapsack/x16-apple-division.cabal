@@ -20,6 +20,6 @@ executable knapsack
 executable knapsack-dp
     import:           warnings
     main-is:          knapsack-dp.hs
-    build-depends:    split, containers ^>=0.7, base ^>=4.21.2.0
+    build-depends:    random, split, containers ^>=0.7, base ^>=4.21.2.0
     hs-source-dirs:   .
     default-language: Haskell2010

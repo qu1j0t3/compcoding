@@ -11,9 +11,16 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE InstanceSigs #-}
 
+-- import Data.IntMap.Strict (IntMap)
+-- import qualified Data.IntMap.Strict as IntMap
+
+-- import Data.Set (Set)
+-- import qualified Data.Set as Set
+
 import System.Environment (getArgs)
 import System.Exit
 import System.IO
+import System.Random
 
 import Data.List.Split
 
@@ -33,8 +40,8 @@ instance Read Item where
                     [w,v] -> [(Item (read w) (read v), "")]
                     _ -> []
 
--- instance Show Item where
---   showsPrec _ (Item w v) s = show w ++ "," ++ show v ++ s
+instance Show Item where
+  showsPrec _ (Item w v) s = show w ++ "," ++ show v ++ s
 
 
 -- Naive recursive version (exponential complexity)
@@ -47,7 +54,7 @@ greaterValue ls rs = if sumValues ls > sumValues rs then ls else rs
   where sumValues items = sum $ map value items
 
 printItem :: Item -> String
-printItem (Item w v) = "  (weight: " ++ show w ++ " value: " ++ show v ++ ")"
+printItem (Item w v) = "  (weight: " ++ show w ++ " value: " ++ show v ++ " density: " ++ show (fromIntegral v / fromIntegral w) ++ ")"
 
 solve :: [Item] -> Int -> [Item]
 solve items capacity  = step items capacity []
@@ -58,15 +65,30 @@ solve items capacity  = step items capacity []
 
 -- e.g.   cabal run knapsack-dp 6  1,10 3,40 2,15 1,15
 
+solvePrint :: Int -> [Item] -> IO ()
+solvePrint cap items =
+  let sol = solve items cap
+  in putStrLn ("Capacity: " ++ show cap)
+      >> putStrLn "Carry:"
+      >> mapM_ (putStrLn . printItem) sol
+      >> putStrLn ("Weight: " ++ show (sum $ map weight sol))
+      >> putStrLn ("Value: " ++ show (sum $ map value sol))
+
+randItems :: [Int] -> Int -> Int -> [Item]
+randItems (w:k:rest) cap maxValue =
+  Item wt (density*wt) : randItems rest cap maxValue
+  where wt = 1 + (abs w `mod` cap)
+        density = 10 + (abs k `mod` 4)
+
 main :: IO ()
 main = getArgs >>= (
-    \case (capacity:items) ->
-            let cap = read capacity
-                sol = solve (map read items) cap
-            in putStrLn ("Capacity: " ++ show cap)
-               >> putStrLn "Carry:"
-               >> mapM_ (putStrLn . printItem) sol
-               >> putStrLn ("Value: " ++ show (sum $ map value sol))
-          _ -> hPutStrLn stderr "args: capacity weight1,value1 weight2,value2 ..."
-               >> exitWith (ExitFailure 1)
+    \case
+      ["--random", capacity, n] ->
+        newStdGen >>= \ gen ->
+          let cap = read capacity
+              items = take (read n) (randItems (randoms gen :: [Int]) cap 20)
+          in solvePrint cap items
+      (capacity:items) -> solvePrint (read capacity) (map read items)
+      _ -> hPutStrLn stderr "args: capacity weight1,value1 weight2,value2 ..."
+            >> exitWith (ExitFailure 1)
   )
