@@ -88,7 +88,10 @@ main = getArgs >>= (
           let cap = read capacity
               items = take (read n) (randItems (randoms gen :: [Int]) cap)
           in solvePrint cap items
+      -- This will eat any set of one or more arguments regardless of whether they parse at runtime (may crash)
+      -- FIXME: validate with `reads` so that we fall through to usage message if any argument fails to parse
       (capacity:items) -> solvePrint (read capacity) (map read items)
       _ -> hPutStrLn stderr "args: capacity weight1,value1 weight2,value2 ..."
-            >> exitWith (ExitFailure 1)
+        >> hPutStrLn stderr "  or: --random capacity number_of_items       to solve a random problem"
+        >> exitWith (ExitFailure 1)
   )
