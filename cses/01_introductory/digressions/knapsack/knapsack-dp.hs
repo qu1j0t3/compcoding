@@ -80,18 +80,24 @@ randItems (w:k:k2:rest) cap =
   where wt = 1 + (abs w `mod` cap)
         density = 2 + ceiling (log (fromIntegral (abs k) / fromIntegral (abs k2)))
 
+
+-- benchmark:  cabal run knapsack-dp -- --seed 12713 100 100      15.57s user
+
 main :: IO ()
 main = getArgs >>= (
     \case
-      ["--random", capacity, n] ->
-        newStdGen >>= \ gen ->
-          let cap = read capacity
-              items = take (read n) (randItems (randoms gen :: [Int]) cap)
-          in solvePrint cap items
+      ["--random", capacity, n] -> newStdGen >>= genSolve (read capacity) (read n)
+
+      ["--seed", seed, capacity, n] -> genSolve (read capacity) (read n) (mkStdGen (read seed))
+
       -- This will eat any set of one or more arguments regardless of whether they parse at runtime (may crash)
       -- FIXME: validate with `reads` so that we fall through to usage message if any argument fails to parse
       (capacity:items) -> solvePrint (read capacity) (map read items)
+
       _ -> hPutStrLn stderr "args: capacity weight1,value1 weight2,value2 ..."
         >> hPutStrLn stderr "  or: --random capacity number_of_items       to solve a random problem"
+        >> hPutStrLn stderr "  or: --seed seed capacity number_of_items    to solve a random problem with specified random seed"
         >> exitWith (ExitFailure 1)
   )
+  where genSolve :: Int -> Int -> StdGen -> IO ()
+        genSolve cap n gen = solvePrint cap (take n (randItems (randoms gen :: [Int]) cap))
