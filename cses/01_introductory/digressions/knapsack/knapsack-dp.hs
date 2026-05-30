@@ -112,9 +112,10 @@ makeMap m items capacity =
                                  withoutItem = lkp c  -- max value attainable for capacity c, with items 1..i-1
                                   -- considering item i, it can only be taken if capacity c fits the item
                                   -- if it's TAKEN, and weight w, then we need to calculate max value for previous items,
-                                  --                but under a capacity reduced by w. so, index by that reduced capacity
-                                 withItem = if c >= weight item then value item + lkp (c - weight item) else withoutItem
-                             in Map.insert (i,c) (max withItem withoutItem) m'')
+                                  --                but under a capacity reduced by w. So, index by that reduced capacity
+                                 withItem = value item + lkp (c - weight item)
+                                 maxValue = if c >= weight item then max withItem withoutItem else withoutItem
+                             in Map.insert (i,c) maxValue m'')
                  m'
                  [1..capacity])
          m
@@ -123,10 +124,11 @@ makeMap m items capacity =
 printMap :: Map (Int,Int) Int -> Int -> Int -> IO ()
 printMap m cap n =
   mapM_ (putStrLn . unwords)
-        [ map (\c -> maybe "---" (\ v -> let s = show v in replicate (3 - length s) ' ' ++ s) (Map.lookup (i,c) m)) [1..cap]
+        [ map (\c -> maybe "---" (\ v -> let s = show v in replicate (3 - length s) ' ' ++ s) (Map.lookup (i,c) m))
+              [1..cap]
           | i <- [1..n] ]
 
--- benchmark:  cabal run knapsack-dp -- --seed 12713 100 100      15.57s user
+-- benchmark:  cabal run knapsack-dp -- --seed 14302 100 100     67.34s user
 
 main :: IO ()
 main = getArgs >>= (
