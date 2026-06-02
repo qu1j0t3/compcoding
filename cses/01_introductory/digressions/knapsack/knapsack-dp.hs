@@ -47,9 +47,11 @@ instance Read Item where
                     [w,v] -> [(Item (read w) (read v), "")]
                     _ -> []
 
-instance Show Item where
-  showsPrec _ (Item w v) s = show w ++ "," ++ show v ++ s
+-- instance Show Item where
+--   showsPrec _ (Item w v) s = show w ++ "," ++ show v ++ s
 
+showItem :: Item -> String
+showItem i = "{w=" ++ show (weight i) ++ ",v=" ++ show (value i) ++ "} "
 
 -- Naive recursive version (exponential complexity)
 --   at each step, given remaining items,
@@ -77,13 +79,11 @@ solve items capacity  = step items capacity []
 solvePrint :: Int -> [Item] -> IO ()
 solvePrint cap items =
   let sol = solve items cap
-      m = makeMap items cap
   in putStrLn ("Capacity: " ++ show cap)
       >> putStrLn "Carry:"
       >> mapM_ (putStrLn . printItem) sol
       >> putStrLn ("Weight: " ++ show (sum $ map weight sol))
       >> putStrLn ("Value: " ++ show (sum $ map value sol))
-      >> printMap m cap (length items)
 
 randItems :: [Int] -> Int -> [Item]
 randItems (w:k:k2:rest) cap =
@@ -102,29 +102,32 @@ randItems (w:k:k2:rest) cap =
 -- Column capacity 0 is all zero.
 -- To compute each cell we look at previous row only,
 -- which is why we build the map in order from row i = 1 to n
-makeMap :: [Item] -> Int -> Map (Int,Int) Int
+makeMap :: [Item] -> Int -> Map (Int,Int) (Int,[Item])
 makeMap items capacity =
   -- The direction of fold here is very important. It must be FOLD LEFT because
   -- we want to update the map as we consume, left-to-right, the given list of row indices (1..n)
   foldl' (\ m' (i,item) ->
-          foldl' (\ m'' c -> let lkp 0 = 0  -- with zero capacity, value is always zero
-                                 lkp c' = if i > 1 then fromJust $ Map.lookup (i-1,c') m'' else 0
+          foldl' (\ m'' c -> let lkp 0 = (0,[])  -- with zero capacity, value is always zero
+                                 lkp c' = if i > 1 then fromJust $ Map.lookup (i-1,c') m'' else (0,[])
                                  withoutItem = lkp c  -- max value attainable for capacity c, with items 1..i-1
                                   -- considering item i, it can only be taken if capacity c fits the item
                                   -- if it's TAKEN, and weight w, then we need to calculate max value for previous items,
                                   --                but under a capacity reduced by w. So, index by that reduced capacity
-                                 withItem = value item + lkp (c - weight item)
-                                 maxValue = if c >= weight item then max withItem withoutItem else withoutItem
+                                 (previousValue,previousItems) = lkp (c - weight item)
+                                 withItemValue = value item + previousValue
+                                 maxValue = if c >= weight item && withItemValue > fst withoutItem
+                                  then (withItemValue,item:previousItems)
+                                  else withoutItem
                              in Map.insert (i,c) maxValue m'')
                  m'
                  [1..capacity])
          Map.empty
          (zip [1..] items)
 
-printMap :: Map (Int,Int) Int -> Int -> Int -> IO ()
+printMap :: Map (Int,Int) (Int,[Item]) -> Int -> Int -> IO ()
 printMap m cap n =
   mapM_ (putStrLn . unwords)
-        [ map (\c -> maybe "---" (\ v -> let s = show v in replicate (3 - length s) ' ' ++ s) (Map.lookup (i,c) m))
+        [ map (\c -> maybe "---" (\ (v,items) -> let s = show v in replicate (3 - length s) ' ' ++ s) (Map.lookup (i,c) m))
               [1..cap]
           | i <- [1..n] ]
 
@@ -160,5 +163,6 @@ main = getArgs >>= (
         genSolveM cap n gen =
           let items = take n (randItems (randoms gen :: [Int]) cap)
               m = makeMap items cap
-          in putStrLn ("Max value: " ++ show (Map.lookup (n,cap) m))
+          in putStrLn ("Max value: " ++ show (fst $ fromJust (Map.lookup (n,cap) m)))
+             >> putStrLn ("Items: " ++ concatMap showItem (snd (fromJust (Map.lookup (n,cap) m))))
 
