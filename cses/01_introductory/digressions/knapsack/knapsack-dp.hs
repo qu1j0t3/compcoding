@@ -77,7 +77,7 @@ solve items capacity  = step items capacity []
 solvePrint :: Int -> [Item] -> IO ()
 solvePrint cap items =
   let sol = solve items cap
-      m = makeMap Map.empty items cap
+      m = makeMap items cap
   in putStrLn ("Capacity: " ++ show cap)
       >> putStrLn "Carry:"
       >> mapM_ (putStrLn . printItem) sol
@@ -102,8 +102,8 @@ randItems (w:k:k2:rest) cap =
 -- Column capacity 0 is all zero.
 -- To compute each cell we look at previous row only,
 -- which is why we build the map in order from row i = 1 to n
-makeMap :: Map (Int,Int) Int -> [Item] -> Int -> Map (Int,Int) Int
-makeMap m items capacity =
+makeMap :: [Item] -> Int -> Map (Int,Int) Int
+makeMap items capacity =
   -- The direction of fold here is very important. It must be FOLD LEFT because
   -- we want to update the map as we consume, left-to-right, the given list of row indices (1..n)
   foldl' (\ m' (i,item) ->
@@ -118,7 +118,7 @@ makeMap m items capacity =
                              in Map.insert (i,c) maxValue m'')
                  m'
                  [1..capacity])
-         m
+         Map.empty
          (zip [1..] items)
 
 printMap :: Map (Int,Int) Int -> Int -> Int -> IO ()
@@ -159,6 +159,6 @@ main = getArgs >>= (
         genSolveM :: Int -> Int -> StdGen -> IO ()
         genSolveM cap n gen =
           let items = take n (randItems (randoms gen :: [Int]) cap)
-              m = makeMap Map.empty items cap
+              m = makeMap items cap
           in putStrLn ("Max value: " ++ show (Map.lookup (n,cap) m))
 
